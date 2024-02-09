@@ -64,6 +64,12 @@ phases:
       - cd $DEFAULT_PATH/aws-aft-core-framework/sources/aft-customizations-common/templates/customizations_pipeline
       - for f in *.jinja; do jinja2 $f -D timestamp="$TIMESTAMP" -D region=$TF_BACKEND_REGION -D bucket=$TF_S3_BUCKET -D key=$TF_S3_KEY -D dynamodb_table=$TF_DDB_TABLE -D kms_key_id=$TF_KMS_KEY_ID -D tf_version=$TF_VERSION >> $(basename $f .jinja).tf; done
       - for f in *.tf; do echo "\n \n"; echo $f; cat $f; done
+      - |
+        terraform_plan_output=$(terraform plan)
+        if [[ $terraform_plan_output =~ "1 resource(s) to be destroyed." ]]; then
+            echo "ERROR: There are resources marked for destroy. Aborting apply."
+            exit 1
+        fi
   build:
     on-failure: ABORT
     commands:
